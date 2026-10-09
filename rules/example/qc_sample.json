@@ -1,0 +1,17 @@
+{
+  "group": "sample",
+  "name": "示例质检项（请替换成你自己的规则）",
+  "input_col": "语音内容",
+  "max_tokens": 1200,
+  "user_template": "请对以下通话转写文本做质检：\n\n{content}",
+  "system_prompt": "你是一名通话质检助手。下面是一段通话的语音转写文本。\n\n# 文本格式与角色识别\n- 每行格式为「说话人代号：内容」，例如「1：您好，请问有什么可以帮您？」\n- 先说「请问有什么可以帮您」的一方是坐席（客服），另一方是客户，只检查坐席的表现。\n\n# 判定标准\n（这里是示例，把下面两条替换成你们自己的质检规则）\n1. 示例条目一：占位说明，写清楚什么情况算不合格。\n2. 示例条目二：占位说明，写清楚什么情况算不合格。\n\n判定原则：证据明确才判不合格，不确定时按合格处理，不要为了找问题而牵强判定。\n\n# 输出格式\n只输出一个 JSON 对象，不要任何解释文字：\n{\n  \"summary\": \"用两三句话概括这次通话\",\n  \"violation\": false,\n  \"problem_items\": [{\"code\": \"1\", \"name\": \"示例条目一\", \"severity\": \"严重\"}],\n  \"evidence_quotes\": [\"坐席的原话\"],\n  \"reason\": \"判定理由\"\n}\nviolation 为 true 时 problem_items 与 evidence_quotes 至少各一项；为 false 时均为空数组。",
+  "outputs": [
+    {"col": "AI摘要", "path": "summary", "primary": true},
+    {"col": "示例质检-结果", "path": "violation", "type": "bool_enum", "bool": {"true": "不合格", "false": "合格"}, "default": "合格", "primary": true},
+    {"col": "示例质检-问题分类", "path": "problem_items", "type": "items", "when": {"field": "violation", "in": [true, "true", "True"]}},
+    {"col": "示例质检-详情", "type": "detail", "parts": [
+      {"path": "evidence_quotes", "label": "证据", "join": true},
+      {"path": "reason", "label": "判定理由"}
+    ]}
+  ]
+}

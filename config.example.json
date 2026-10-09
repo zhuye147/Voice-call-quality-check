@@ -1,0 +1,137 @@
+{
+  "_说明": "复制成 config.json 后填写自己的值。config.json 已在 .gitignore 里，不会被提交。相对路径按项目根目录解析。",
+
+  "paths": {
+    "_说明": "output_files 按通话类型分文件输出；把 split_by_call_type 改成 false 就回到单文件。",
+    "cookies": "<登录态文件路径>",
+    "output_file": "output\\质检结果.xlsx",
+    "split_by_call_type": true,
+    "split_default": "接电",
+    "output_files": {
+      "接电": "output\\接电质检结果.xlsx",
+      "外呼": "output\\外呼质检结果.xlsx"
+    },
+    "cache_dir": "output\\_cache"
+  },
+
+  "api": {
+    "_说明": "三个接口地址 + 签名方式 + 各系统的专有请求头/参数；把占位符替换成你自己的值。",
+    "scrm_list_url": "https://<业务系统域名>/<单据列表接口路径>",
+    "ivs_cdr_url": "https://<话务系统域名>/<话单接口路径>",
+    "voice_url": "https://<录音服务域名>/<录音下载接口路径>",
+    "sign": {
+      "_说明": "接口签名 = HMAC-SHA256(message_template 渲染出来的内容, key)；不需要签名就留空 key",
+      "key": "<签名密钥>",
+      "header_signature": "<签名头名>",
+      "header_timestamp": "<时间戳头名>",
+      "message_template": "<待签名内容模板，例如 {path}:{ts}>"
+    },
+    "scrm_request_fields": ["<单据接口需要返回的字段1>", "<字段2>"],
+    "scrm_module_id": "<业务模块ID>",
+    "scrm_extra_headers": {"<业务系统专有请求头>": "<值>"},
+    "scrm_extra_body": {},
+    "ivs_extra_headers": {},
+    "ivs_extra_cookies": {"<话务系统专有Cookie>": "<值>"},
+    "ivs_extra_params": {"<话单接口专有参数>": "<值>"}
+  },
+
+  "field_map": {
+    "_说明": "接口字段名 → 内部语义键；代码按语义键取数，换系统时只改这里。",
+    "order": {
+      "order_no": "<单据编号字段>",
+      "customer_name": "<客户姓名字段>",
+      "customer_phone": "<客户手机号字段>",
+      "customer_code": "<客户编号字段>",
+      "created_at": "<创建时间字段>",
+      "topic1": "<业务分类L1字段>",
+      "topic2": "<业务分类L2字段>",
+      "topic3": "<业务分类L3字段>",
+      "remark": "<备注字段>",
+      "creator": "<创建人字段>",
+      "creator_dept": "<创建人部门字段>",
+      "call_id": "<录音id字段>"
+    },
+    "cdr": {
+      "_说明": "话单接口字段名。默认用标准 CDR 字段名（uniqueid / calldate / src / dst / disposition / duration / billsec / recordingfile），接口不一样时才需要改。"
+    }
+  },
+
+  "field_aliases": {
+    "_说明": "导入历史表格时用：把表格里的老列名映射到标准列名，例如 {\"创建时间\": \"单据创建时间\"}。不需要就留空对象。"
+  },
+
+  "run": {
+    "call_type": "all",
+    "status_filter": "connected",
+    "download_workers": 3,
+    "asr_batch": 2,
+    "qc_concurrency": 10,
+    "cpu_priority": "below_normal",
+    "save_every_n": 200,
+    "save_interval_sec": 300,
+    "save_retry_interval": 60,
+    "excel_lock_retry": 3,
+    "limit": null,
+    "print_every_n": 10
+  },
+
+  "asr": {
+    "device": "auto",
+    "_说明": "batch_size_s / files_per_call 越小内存越省；调大更快但更吃内存。",
+    "batch_size_s": 60,
+    "files_per_call": 1,
+    "gc_every_chunks": 10,
+    "ncpu": 2,
+    "torch_threads": 2,
+    "download_retries": 2,
+    "models": {
+      "asr": "iic/speech_seaco_paraformer_large_asr_nat-zh-cn-16k-common-vocab8404-pytorch",
+      "asr_rev": "v2.0.4",
+      "vad": "iic/speech_fsmn_vad_zh-cn-16k-common-pytorch",
+      "vad_rev": "v2.0.4",
+      "punc": "iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch",
+      "punc_rev": "v2.0.4",
+      "spk": "iic/speech_campplus_sv_zh-cn_16k-common",
+      "spk_rev": "v2.0.2"
+    }
+  },
+
+  "llm": {
+    "_说明": "provider 决定用哪套 API，两套都是 OpenAI 兼容协议。",
+    "provider": "deepseek",
+    "deepseek": {
+      "base_url": "https://api.deepseek.com/v1",
+      "api_key": "<你的-API-KEY>",
+      "model": "deepseek-chat"
+    },
+    "menshen": {
+      "base_url": "http://<网关域名>/v1",
+      "api_key": "<你的-API-KEY>",
+      "model": "deepseek-v4-flash"
+    },
+    "temperature": 0.1,
+    "max_retries": 3,
+    "retry_delay": 5,
+    "timeout": 180
+  },
+
+  "qc": {
+    "_说明": "质检方案：一个方案 = 一个规则目录。call_type_profile 决定哪种通话用哪套方案。",
+    "profiles": {
+      "sample": {
+        "dir": "rules/example",
+        "label": "示例质检方案",
+        "desc": "演示用，请替换成自己的规则"
+      }
+    },
+    "call_type_profile": {
+      "接电": "sample",
+      "外呼": "sample"
+    },
+    "default_profile": "sample",
+    "clear_out_of_scope": true,
+    "overwrite": false,
+    "min_content_len": 10,
+    "content_truncate": 4000
+  }
+}
